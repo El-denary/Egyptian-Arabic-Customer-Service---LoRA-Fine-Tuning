@@ -8,6 +8,7 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=pytorch&logoColor=white)](https://pytorch.org)
 [![HuggingFace](https://img.shields.io/badge/HuggingFace-Transformers-FFD21E?style=flat&logo=huggingface&logoColor=black)](https://huggingface.co)
 [![PEFT](https://img.shields.io/badge/PEFT-LoRA-FF6B35?style=flat)](https://github.com/huggingface/peft)
+[![HuggingFace Model](https://img.shields.io/badge/🤗%20Model-Eldenary%2Fqwen--Customer--Service--lora-FFD21E?style=flat)](https://huggingface.co/Eldenary/qwen-Customer-Service-lora)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat)](LICENSE)
 
 *Teaching a language model to speak Egyptian Arabic — naturally, contextually, helpfully.*
@@ -19,6 +20,31 @@
 ## What Is This?
 
 This project fine-tunes **Qwen/Qwen3-1.7B** on a custom dataset of **257 Egyptian Arabic customer service conversations** using **LoRA (Low-Rank Adaptation)**. The result is a lightweight, efficient model that can handle real-world customer inquiries in Egyptian Arabic dialect — resolving order issues, answering product questions, and providing natural, context-aware support responses.
+
+---
+
+## 🤗 Model on HuggingFace Hub
+
+The fine-tuned LoRA adapter is publicly available on HuggingFace:
+
+**[Eldenary/qwen-Customer-Service-lora](https://huggingface.co/Eldenary/qwen-Customer-Service-lora)**
+
+You can load it directly without cloning this repo or running the notebook:
+
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import PeftModel
+import torch
+
+base_model = "Qwen/Qwen3-1.7B"
+adapter    = "Eldenary/qwen-Customer-Service-lora"
+
+model = AutoModelForCausalLM.from_pretrained(base_model, device_map="auto", torch_dtype=torch.float16)
+model = PeftModel.from_pretrained(model, adapter)
+model.eval()
+
+tokenizer = AutoTokenizer.from_pretrained(adapter)
+```
 
 ---
 
@@ -130,26 +156,28 @@ Open `Fine_tuning.ipynb` and run all cells in order:
 | **1. Load & Preprocess** | Loads `CustomerData.json`, applies Qwen3 chat template, tokenizes |
 | **2. LoRA Config** | Wraps the base model with LoRA adapters via PEFT |
 | **3. Training** | Trains for 5 epochs with the HuggingFace `Trainer` |
-| **4. Save** | Saves adapter weights and tokenizer to `./qwen-Customer-Service-lora` |
+| **4. Save** | Saves adapter weights and tokenizer locally and pushes to `Eldenary/qwen-Customer-Service-lora` on the Hub |
 | **5. Inference** | Reloads the merged model and runs a sample query |
 
 ---
 
 ## Inference Example
 
-After training, run a query in Egyptian Arabic:
+You can run inference by loading the adapter directly from the Hub — no local training needed:
 
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 import torch
 
-model_name = "Qwen/Qwen3-1.7B"
-model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype=torch.float16)
-model = PeftModel.from_pretrained(model, "./qwen-Customer-Service-lora")
+base_model = "Qwen/Qwen3-1.7B"
+adapter    = "Eldenary/qwen-Customer-Service-lora"
+
+model = AutoModelForCausalLM.from_pretrained(base_model, device_map="auto", torch_dtype=torch.float16)
+model = PeftModel.from_pretrained(model, adapter)
 model.eval()
 
-tokenizer = AutoTokenizer.from_pretrained("./qwen-Customer-Service-lora")
+tokenizer = AutoTokenizer.from_pretrained(adapter)
 
 prompt = "الأوردر لسه موصلش."
 
@@ -172,7 +200,7 @@ print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 | Training Framework | HuggingFace Transformers + Trainer |
 | Dataset Format | HuggingFace `datasets.Dataset` |
 | Precision | `fp16` mixed precision |
-| Model Hub | HuggingFace Hub (`huggingface_hub`) |
+| Model Hub | [Eldenary/qwen-Customer-Service-lora](https://huggingface.co/Eldenary/qwen-Customer-Service-lora) |
 
 ---
 
